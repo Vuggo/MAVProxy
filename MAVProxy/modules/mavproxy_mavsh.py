@@ -56,10 +56,10 @@ class mavsh(mp_module.MPModule):
         else:
             print(self.usage())
 
+    
     def status(self):
         '''returns information about module'''
-        return ":lolulmfao:"
-            
+        return ":lolulmfao:"            
 
 
     def mavsh_init(self):
@@ -75,13 +75,14 @@ class mavsh(mp_module.MPModule):
                 - if not 255 then send a rejection packet
         '''
 
-
         '''initializes mavsh link'''
         # send a mavsh_session_init packet        
-        print(self.packets_mytarget)
+        #print(self.packets_mytarget)
         #actually prints a message!!!!
         print(self.master.mav.mavsh_init_encode(self.target_system,MAVSH_SESSION_INIT))
         self.master.mav.mavsh_init_send(self.target_system,MAVSH_SESSION_INIT)
+        print(self.master.mav.mavsh_ack_encode(self.target_system,MAVSH_SESSION_ACCEPTED))
+        self.master.mav.mavsh_ack_send(self.target_system,MAVSH_SESSION_ACCEPTED)
         return 
 
     
@@ -91,22 +92,23 @@ class mavsh(mp_module.MPModule):
     the pi's version of the script needs to start like this
     - if packet recv and type == MAVSH_INIT:
         respond with mavsh_ack (system_id = 1, component id = rpi's component target system = 255, target component id = 1)
+        
     '''
 
     def mavlink_packet(self, m):
         '''handle mavlink packets'''
         if m.get_type() == 'HEARTBEAT':
-            print(m.values)
-
+            pass
         elif m.get_type == 'MAVSH_INIT':
             print(m)
-
+            self.master.mav.mavsh_ack_send(self.target_system,MAVSH_SESSION_ACCEPTED)
         elif m.get_type() == 'MAVSH_ACK':
-            if self.settings.target_system == 0 or self.settings.target_system == m.get_srcSystem():
-                self.packets_mytarget += 1                                   
-            else:
-                self.packets_othertarget += 1
-           
+            if self.target_system == 0:
+                print(m)                
+                '''
+                need to test this with the gcs being bound and running this mavproxy instance
+                '''
+                self.master.mav.mavsh_ack_send(self.target_system,MAVSH_SESSION_ACCEPTED)                        
 
 def init(mpstate):
     '''initialise module'''
